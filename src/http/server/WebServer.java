@@ -131,7 +131,14 @@ public class WebServer {
         String path = getPath(req);
         String content_type = getContentType(path);
         response = readFile("../doc/" + path);
-        header_method = generateHeader(content_type, response.length);
+        if(response == null){
+          String errorName = "File not found";
+          Logger.error("WebServer_handleRoutes", "File not found");
+          header_method = generateErrorHeader(errorName, 404);
+          response = generateErrorResponse(errorName,404).getBytes();
+        }else{
+          header_method = generateHeader(content_type, response.length);
+        }
         break;
       case "POST":
 
@@ -153,12 +160,13 @@ public class WebServer {
     ByteArrayOutputStream my_stream = new ByteArrayOutputStream();
     try {
       my_stream.write(header_method.getBytes());
-      my_stream.write(response);
+      if(response != null){
+        my_stream.write(response);
+      }
     } catch (IOException e) {
       e.printStackTrace();
     }
     byte[] concatenated_byte_array = my_stream.toByteArray();  
-
     //return header_method + generateHTMLHead() + response + generateFooter();
     return concatenated_byte_array;
   }
@@ -166,27 +174,19 @@ public class WebServer {
   public static byte[] readFile(String path) {
 
     String content = "";
-    byte[] data = new byte[1];
+    byte[] data = null;
     BufferedReader reader;
 
     try {
       
-      /*
-      reader = new BufferedReader(new FileReader(path));
-      String currentLine = reader.readLine();
-      while (currentLine != null) {
-        content += currentLine;
-        currentLine = reader.readLine();
-      }
-      reader.close();
-      */
-      
+    
       File f = new File(path);
 
-      // TODO: check if exists
-      FileInputStream fis = new FileInputStream(f);
-      data = new byte[fis.available()];
-      fis.read(data);
+      if(f.exists() && !f.isDirectory()){
+        FileInputStream fis = new FileInputStream(f);
+        data = new byte[fis.available()];
+        fis.read(data);
+      }
       
 
     } catch (Exception e) {
@@ -255,6 +255,37 @@ public class WebServer {
     return String.join("\r\n", components) + "\r\n";
  
   }
+
+  public static String generateErrorHeader(String error_name, Integer code_error) {
+
+    List<String> components = new ArrayList<String>();
+
+    components.add("HTTP/1.0 "+code_error + " " + error_name);
+    components.add("Server: Bot");
+    // this blank line signals the end of the headers
+    components.add("");
+    // Send the HTML page
+
+    return String.join("\r\n", components) + "\r\n";
+ 
+  }
+
+  public static String generateErrorResponse(String error_name, Integer code_error) {
+
+    List<String> components = new ArrayList<String>();
+    components.add(generateHTMLHead());
+
+
+    components.add("<H1>ERROR: "+ code_error+" : "+error_name+"</H1>");
+    components.add(generateFooter());
+
+    return String.join("\r\n", components) + "\r\n";
+ 
+  }
+
+  
+
+
 
   public static String generateResponse() {
 
