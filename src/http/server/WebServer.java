@@ -161,7 +161,10 @@ public class WebServer {
         // do things
         break; 
       default:
-        // error
+        String errorName = "File not found";
+        Logger.error("WebServer_handleRoutes", "File not found");
+        header_method = generateErrorHeader(errorName, 404);
+        response = generateErrorResponse(errorName,404).getBytes();
         break;
     }
 
