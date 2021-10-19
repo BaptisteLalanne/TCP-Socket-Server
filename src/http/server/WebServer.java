@@ -123,12 +123,19 @@ public class WebServer {
 
     String method = getMethod(req);
 
-    byte[] response = new byte[1];
+    byte[] response = null;
     String header_method = "";
 
     switch (method) {
       case "GET":
+
         String path = getPath(req);
+
+        if (path.equals("/"))
+          path = "/index.html";
+
+        Logger.debug("WebServer_handleRoutes", "path: '" + path + '"');
+        
         String content_type = getContentType(path);
         response = readFile("../doc/" + path);
         if(response == null){
@@ -139,18 +146,19 @@ public class WebServer {
         }else{
           header_method = generateHeader(content_type, response.length);
         }
+
         break;
       case "POST":
-
+        // do things
         break;
       case "HEAD":
-
+        // do things
         break;
       case "PUT":
-
+        // do things
         break;
       case "DELETE":
-
+        // do things
         break; 
       default:
         // error
