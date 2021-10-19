@@ -1,4 +1,4 @@
-///A Simple Web Server (WebServer.java)
+<///A Simple Web Server (WebServer.java)
 
 package http.server;
 
@@ -54,6 +54,9 @@ public class WebServer {
         String str = ".";
         while (str != null && !str.equals(""))
           str = in.readLine();
+
+        // CHECK HEADER
+        
 
         // Send the response
         // Send the headers
