@@ -39,7 +39,7 @@ public class WebServer {
     String current_content_type = null;
     List<String> current_body;
 
-    System.out.println("Webserver starting up on port 80");
+    System.out.println("Webserver starting up on port 8000");
     System.out.println("(press ctrl-c to exit)");
     try {
       // create the main server socket
@@ -195,16 +195,7 @@ public class WebServer {
       response = concatByte(headerByte, response);
       break;
     }
-
-    ByteArrayOutputStream my_stream = new ByteArrayOutputStream();
-    try {
-      my_stream.write(response);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    byte[] concatenated_byte_array = my_stream.toByteArray();
-    // return header_method + generateHTMLHead() + response + generateFooter();
-    return concatenated_byte_array;
+    return response;
   }
 
   public static byte[] handleGetRequest(List<String> header) {
