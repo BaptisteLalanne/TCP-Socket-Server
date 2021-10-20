@@ -36,6 +36,7 @@ public class WebServer {
   protected void start() {
     ServerSocket s;
     List<String> current_header;
+    String current_content_type = null;
     List<String> current_body;
 
     System.out.println("Webserver starting up on port 80");
@@ -82,6 +83,9 @@ public class WebServer {
                 //Logger.debug("WebServer_start", current);
                 if (current != "") {
                   if (in_header) {
+                    if(current.contains("Content-Type:")){
+                      current_content_type = current.split(": ")[1];
+                    }
                     current_header.add(current);
                   } else {
                     current_body.add(current);
@@ -119,7 +123,7 @@ public class WebServer {
 
 
           // CHECK HEADER
-          byte[] response = handleRoutes(current_header, current_body);
+          byte[] response = handleRoutes(current_header, current_body, current_content_type);
           //out.println(response);
           out.write(response);
           out.flush();
@@ -161,7 +165,7 @@ public class WebServer {
 
   }
 
-  public static byte[] handleRoutes(List<String> header, List<String> body) {
+  public static byte[] handleRoutes(List<String> header, List<String> body, String currentContentType) {
 
     String method = getMethod(header);
 
@@ -191,16 +195,24 @@ public class WebServer {
 
         break;
       case "POST":
-        // do things
+        response = readPost(body,currentContentType);
+        if(response == null){
+          String errorName = "Server error";
+          response = generateErrorResponse(errorName,500).getBytes();
+          header_method = generateErrorHeader(errorName, 500);
+          Logger.error("WebServer_handleRoutes", "Body unreadable");
+        } else {
+          header_method = generateHeader("text/html", response.length);
+        }
         break;
       case "HEAD":
-        // do things
+        header_method = generateErrorHeader("Not Implemented", 501);
         break;
       case "PUT":
-        // do things
+      header_method = generateErrorHeader("Not Implemented", 501);
         break;
       case "DELETE":
-        // do things
+          header_method = generateErrorHeader("Not Implemented", 501);
         break; 
       default:
         String errorName = "File not found";
@@ -247,6 +259,42 @@ public class WebServer {
     }
  
     return data;
+  }
+
+  public static byte[] readPost(List<String> body, String currentContentType){
+    
+    List<String> content = new ArrayList<String>();
+    content.add(generateHTMLHead());
+
+
+
+    switch (currentContentType) {
+      case "text":
+        for (String data : body) {
+          content.add("<p> "+data+ "</p>");
+        }
+        break;
+      case "application/x-www-form-urlencoded":
+        for (String data : body) {
+          for (String element : data.split("&")) {
+            // If argument undefined
+            String[] values = element.split("=");
+            if(values.length > 1){
+              content.add("<p> "+values[1]+ "</p>");
+            }
+          }
+        }
+      
+      break;
+      case "multipart/form-data":
+      //todo
+      break;
+      default:
+        break;
+    }
+
+    content.add(generateFooter());
+    return String.join("\r\n",content).getBytes();
   }
 
 
