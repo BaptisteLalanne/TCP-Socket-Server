@@ -35,14 +35,14 @@ public class WebServer {
    */
   protected void start() {
     ServerSocket s;
-    List<String> current_request;
+    List<String> current_header;
     List<String> current_body;
 
     System.out.println("Webserver starting up on port 80");
     System.out.println("(press ctrl-c to exit)");
     try {
       // create the main server socket
-      s = new ServerSocket(3000);
+      s = new ServerSocket(8000);
     } catch (Exception e) {
       System.out.println("Error: " + e);
       return;
@@ -54,65 +54,77 @@ public class WebServer {
         // wait for a connection
         Socket remote = s.accept();
 
-        current_request = new ArrayList<String>();
+        current_header = new ArrayList<String>();
         current_body = new ArrayList<String>();
 
         // remote is now the connected socket
         System.out.println("Connection, sending data.");
 
         BufferedInputStream bis = new BufferedInputStream(remote.getInputStream());
+        
         // read until a single byte is available
         
         char c = 'a';
         char previous = '\0';
         String current = "";
         boolean in_header = true;
-        while(bis.available() > 0) {
-          c = (char) bis.read();
-          if (c != '\0') {
-            if (c != '\r' && c != '\n')
-              current += c;
-            if (c == '\n' && previous == '\r') {
-              // append to list
-              //Logger.debug("WebServer_start", current);
-              if (current != "") {
-                if (in_header) {
-                  current_request.add(current);
-                } else {
-                  current_body.add(current);
+        Logger.debug("WebServer_start", "to read: " + bis.available());
+
+        if (bis.available() != 0) {
+
+          while(bis.available() > 0) {
+            c = (char) bis.read();
+            if (c != '\0') {
+              if (c != '\r' && c != '\n')
+                current += c;
+              if (c == '\n' && previous == '\r') {
+                // append to list
+                //Logger.debug("WebServer_start", current);
+                if (current != "") {
+                  if (in_header) {
+                    current_header.add(current);
+                  } else {
+                    current_body.add(current);
+                  }
                 }
+                // reset string
+                current = "";
               }
-              // reset string
-              current = "";
+            } else {
+              in_header = false;
             }
-          } else {
-            in_header = false;
+
+            previous = c;
           }
 
-          previous = c;
+          //bis.reset();
+          // bis.close();
+
+          Logger.debug("WebServer_start", "end read");
+
+          if (!current.equals(""))
+            current_body.add(current);
+          // Logger.debug("WebServer_start", current);
+
+          // testing lists
+          for (String ss: current_header) {
+            Logger.debug("WebServer_start", "header: " + ss);
+          }
+
+          for (String ss: current_body) {
+            Logger.debug("WebServer_start", "body: " + ss);
+          }
+
+          OutputStream out = remote.getOutputStream();
+
+
+          // CHECK HEADER
+          byte[] response = handleRoutes(current_header, current_body);
+          //out.println(response);
+          out.write(response);
+          out.flush();
         }
 
-        current_body.add(current);
-        // Logger.debug("WebServer_start", current);
-
-        // testing lists
-        for (String ss: current_request) {
-          Logger.debug("WebServer_start", "header: " + ss);
-        }
-
-        for (String ss: current_body) {
-          Logger.debug("WebServer_start", "body: " + ss);
-        }
-
-        OutputStream out = remote.getOutputStream();
-
-
-        // CHECK HEADER
-        byte[] response = handleRoutes(current_request);
-        //out.println(response);
-        out.write(response);
-
-        out.flush();
         remote.close();
       } catch (Exception e) {
         System.out.println("Error: " + e);
@@ -149,9 +161,9 @@ public class WebServer {
 
   }
 
-  public static byte[] handleRoutes(List<String> req) {
+  public static byte[] handleRoutes(List<String> header, List<String> body) {
 
-    String method = getMethod(req);
+    String method = getMethod(header);
 
     byte[] response = null;
     String header_method = "";
@@ -159,7 +171,7 @@ public class WebServer {
     switch (method) {
       case "GET":
 
-        String path = getPath(req);
+        String path = getPath(header);
 
         if (path.equals("/"))
           path = "/index.html";
