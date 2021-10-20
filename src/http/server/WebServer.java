@@ -36,6 +36,7 @@ public class WebServer {
   protected void start() {
     ServerSocket s;
     List<String> current_request;
+    List<String> current_body;
 
     System.out.println("Webserver starting up on port 80");
     System.out.println("(press ctrl-c to exit)");
@@ -54,28 +55,57 @@ public class WebServer {
         Socket remote = s.accept();
 
         current_request = new ArrayList<String>();
+        current_body = new ArrayList<String>();
 
         // remote is now the connected socket
         System.out.println("Connection, sending data.");
-        BufferedReader in = new BufferedReader(new InputStreamReader(
-            remote.getInputStream()));
-        //PrintWriter out = new PrintWriter(remote.getOutputStream());
+
+        BufferedInputStream bis = new BufferedInputStream(remote.getInputStream());
+        // read until a single byte is available
+        
+        char c = 'a';
+        char previous = '\0';
+        String current = "";
+        boolean in_header = true;
+        while(bis.available() > 0) {
+          c = (char) bis.read();
+          if (c != '\0') {
+            if (c != '\r' && c != '\n')
+              current += c;
+            if (c == '\n' && previous == '\r') {
+              // append to list
+              //Logger.debug("WebServer_start", current);
+              if (current != "") {
+                if (in_header) {
+                  current_request.add(current);
+                } else {
+                  current_body.add(current);
+                }
+              }
+              // reset string
+              current = "";
+            }
+          } else {
+            in_header = false;
+          }
+
+          previous = c;
+        }
+
+        current_body.add(current);
+        // Logger.debug("WebServer_start", current);
+
+        // testing lists
+        for (String ss: current_request) {
+          Logger.debug("WebServer_start", "header: " + ss);
+        }
+
+        for (String ss: current_body) {
+          Logger.debug("WebServer_start", "body: " + ss);
+        }
 
         OutputStream out = remote.getOutputStream();
 
-        // read the data sent. We basically ignore it,
-        // stop reading once a blank line is hit. This
-        // blank line signals the end of the client HTTP
-        // headers.
-        String str = ".";
-        while (str != null && !str.equals("")) {
-          str = in.readLine();
-          if (str != null && !str.equals("")) {
-            Logger.debug("WebServer_run", str);
-            current_request.add(str);
-          }
-
-        }
 
         // CHECK HEADER
         byte[] response = handleRoutes(current_request);
