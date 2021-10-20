@@ -6,6 +6,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -58,8 +59,6 @@ public class WebServer {
         current_header = new ArrayList<String>();
         current_body = new ArrayList<String>();
 
-        // remote is now the connected socket
-        System.out.println("Connection, sending data.");
 
         BufferedInputStream bis = new BufferedInputStream(remote.getInputStream());
 
@@ -69,9 +68,10 @@ public class WebServer {
         char previous = '\0';
         String current = "";
         boolean in_header = true;
-        Logger.debug("WebServer_start", "to read: " + bis.available());
 
         if (bis.available() != 0) {
+          // remote is now the connected socket
+          System.out.println("Connection, sending data.");
 
           while (bis.available() > 0) {
             c = (char) bis.read();
@@ -178,10 +178,10 @@ public class WebServer {
       response = handlePostRequest(header, body, currentContentType);
       break;
     case "HEAD":
-      response = generateErrorHeader("Not Implemented", 501).getBytes();
-      break;
+      response = handleGetRequest(header);
+    break;
     case "PUT":
-      response = generateErrorHeader("Not Implemented", 501).getBytes();
+      response = handlePutRequest(header, body, currentContentType);
       break;
     case "DELETE":
       response = generateErrorHeader("Not Implemented", 501).getBytes();
@@ -216,7 +216,7 @@ public class WebServer {
       header_method = generateErrorHeader(errorName, 404);
       response = generateErrorResponse(errorName, 404).getBytes();
     } else {
-      header_method = generateHeader(content_type, response.length);
+      header_method = generateHeader(content_type, response.length,200);
     }
     byte[] headerByte = header_method.getBytes();
     byte[] output = concatByte(headerByte, response);
@@ -233,12 +233,41 @@ public class WebServer {
       header_method = generateErrorHeader(errorName, 500);
       Logger.error("WebServer_handleRoutes", "Body unreadable");
     } else {
-      header_method = generateHeader("text/html", response.length);
+      header_method = generateHeader("text/html", response.length,200);
     }
     byte[] headerByte = header_method.getBytes();
     byte[] output = concatByte(headerByte, response);
     return output;
   }
+
+  public static byte[] handlePutRequest(List<String> header, List<String> body, String currentContentType) {
+    byte[] response = null;
+    String header_method = "";
+    response = readPost(body, currentContentType);
+    if (response == null) {
+      String errorName = "Server error";
+      response = generateErrorResponse(errorName, 500).getBytes();
+      header_method = generateErrorHeader(errorName, 500);
+      Logger.error("WebServer_handlePutRequest", "Body unreadable");
+    } else {
+      header_method = generateHeader("text/html", response.length,201);
+      try {
+        FileWriter myWriter = new FileWriter("../doc/put.txt");
+        String message = String.join("\n",body); 
+        Logger.warning("WebServer_handlePutRequest", "Try to write: "+ message);
+        myWriter.write(String.join("\n",message));
+        myWriter.close();
+        Logger.warning("WebServer_handlePutRequest", "Written output in file, sucess");
+      } catch (IOException e) {
+        System.out.println("An error occurred.");
+        e.printStackTrace();
+      }
+    }
+    byte[] headerByte = header_method.getBytes();
+    byte[] output = concatByte(headerByte, response);
+    return output;
+  }
+
 
   public static byte[] concatByte(byte[] headerByte, byte[] response) {
     int lenArray1 = headerByte.length;
@@ -348,11 +377,11 @@ public class WebServer {
 
   }
 
-  public static String generateHeader(String content_type, Integer content_length) {
+  public static String generateHeader(String content_type, Integer content_length, Integer http_code) {
 
     List<String> components = new ArrayList<String>();
 
-    components.add("HTTP/1.0 200 OK");
+    components.add("HTTP/1.0 "+http_code+" OK");
     components.add("Content-Type: " + content_type);
     components.add("Content-Length: " + content_length);
     components.add("Server: Bot");
@@ -382,7 +411,6 @@ public class WebServer {
 
     List<String> components = new ArrayList<String>();
     components.add(generateHTMLHead());
-
     components.add("<H1>ERROR: " + code_error + " : " + error_name + "</H1>");
     components.add(generateFooter());
 

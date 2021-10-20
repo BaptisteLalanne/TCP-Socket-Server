@@ -1,0 +1,1 @@
+curl -i -X DELETE -H 'Content-Type: application/json' -d 'put.txt' localhost:8000

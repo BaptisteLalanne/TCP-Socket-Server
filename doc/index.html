@@ -12,15 +12,21 @@
     <p>JAVA Socket Server HTTP</p>
     <p>Pannel de test des différentes fonctionnalités du serveur socket</p>
     <ul>
-        <li> GET:  <a href="index.html">Page HTML</a></li>
-        <li> GET:  <a href="sch.mp4">Vidéo</a></li>
-        <li> GET:  <a href="image.jpg">Image</a></li>
-        <li> GET:  <a href="sample.mp3">Audio</a></li>
-        <li> GET:  <a href="indesdfsdfx.html">Erreur 404</a></li>
-        <li> HEAD:  <a href="indesdfsdfx.html">Erreur 501</a></li>
-        <li> POST: <a href="upload.html">x-www-form-urlencoded</a></li>
-        <li> POST: <a href="index.html">application/form-data</a></li>
-
+        <li>200 | GET:  <a href="index.html">Page HTML</a></li>
+        <li>200 | GET:  <a href="sch.mp4">Vidéo</a></li>
+        <li>200 | GET:  <a href="image.jpg">Image</a></li>
+        <li>200 | GET:  <a href="sample.mp3">Audio</a></li>
+        <li>200 | GET:  <a href="indesdfsdfx.html">Erreur 404</a></li>
+        <li>200 | POST: <a href="upload.html">x-www-form-urlencoded</a></li>
     </ul>
+
+    <p>Pour essayer les autres fonctionnalités:</p>
+    <em>Attention: Les scripts utilisent <code>cURL (curl)</code></em>
+    <p>200 | POST methode : <code>post.sh</code></p>
+    <p>501 | DELETE methode: <code>delete.sh</code></p>
+    <p>201 | PUT methode: <code>put.sh</code></p>
+    <hr></hr>
+    <em> Il est possible de tester d'autres codes de retour en modifiant les scripts</em>
+
 </body>
 </html>
