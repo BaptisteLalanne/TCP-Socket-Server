@@ -69,6 +69,7 @@ public class WebServer {
         String current = "";
         boolean in_header = true;
 
+        System.out.println("Request received");
         if (bis.available() != 0) {
           // remote is now the connected socket
           System.out.println("Connection, sending data.");
